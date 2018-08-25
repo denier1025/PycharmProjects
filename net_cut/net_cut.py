@@ -5,7 +5,7 @@ import scapy.all as scapy
 
 def process_packet(packet):
     scapy_packet = scapy.IP(packet.get_payload())
-    if scapy_packet.haslayer(scapy.DNSRR)
+    if scapy_packet.haslayer(scapy.DNSRR):
         print(scapy_packet.show())
     packet.accept()
 
