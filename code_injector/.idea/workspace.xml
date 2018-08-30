@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9e197750-f699-45c0-8bfb-bc7cb5b84162" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/../packet_sniffer/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/code_injector.py" beforeDir="false" afterPath="$PROJECT_DIR$/code_injector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../packet_sniffer/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../packet_sniffer/.idea/workspace.xml" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/venv/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -56,21 +54,23 @@
     <session id="794637826">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="3" />
+          <entry key="project.closed" value="4" />
           <entry key="project.open.time.0" value="1" />
-          <entry key="project.open.time.3" value="1" />
+          <entry key="project.open.time.3" value="2" />
           <entry key="project.open.time.4" value="2" />
-          <entry key="project.opened" value="4" />
+          <entry key="project.opened" value="5" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="3108" />
+          <entry key="py" value="4629" />
+          <entry key="txt" value="12" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="3108" />
+          <entry key="PLAIN_TEXT" value="12" />
+          <entry key="Python" value="4629" />
         </counts>
       </usages-collector>
     </session>
@@ -80,11 +80,12 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/code_injector.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-3060">
-              <caret line="6" column="9" lean-forward="true" selection-start-line="6" selection-start-column="9" selection-end-line="6" selection-end-column="9" />
+            <state relative-caret-position="201">
+              <caret line="235" column="40" lean-forward="true" selection-start-line="235" selection-start-column="40" selection-end-line="235" selection-end-column="40" />
               <folding>
-                <marker date="1535554988658" expanded="true" signature="7558:7559" ph="..." />
-                <marker date="1535554988658" expanded="true" signature="7920:7992" ph="..." />
+                <element signature="e#23#44#0" expanded="true" />
+                <marker date="1535591721500" expanded="true" signature="7573:7574" ph="..." />
+                <marker date="1535591721500" expanded="true" signature="10992:10997" ph="..." />
               </folding>
             </state>
           </provider>
@@ -114,7 +115,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -126,6 +126,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -191,6 +192,21 @@
       <option name="presentableId" value="Default" />
       <updated>1534637663058</updated>
     </task>
+    <task id="LOCAL-00001" summary="some changes">
+      <created>1535555019545</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1535555019545</updated>
+    </task>
+    <task id="LOCAL-00002" summary="some changes">
+      <created>1535579135581</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1535579135581</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -218,14 +234,19 @@
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="some changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="some changes" />
+  </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/code_injector.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3060">
-          <caret line="6" column="9" lean-forward="true" selection-start-line="6" selection-start-column="9" selection-end-line="6" selection-end-column="9" />
+        <state relative-caret-position="201">
+          <caret line="235" column="40" lean-forward="true" selection-start-line="235" selection-start-column="40" selection-end-line="235" selection-end-column="40" />
           <folding>
-            <marker date="1535554988658" expanded="true" signature="7558:7559" ph="..." />
-            <marker date="1535554988658" expanded="true" signature="7920:7992" ph="..." />
+            <element signature="e#23#44#0" expanded="true" />
+            <marker date="1535591721500" expanded="true" signature="7573:7574" ph="..." />
+            <marker date="1535591721500" expanded="true" signature="10992:10997" ph="..." />
           </folding>
         </state>
       </provider>

