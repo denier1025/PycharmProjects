@@ -51,6 +51,6 @@ class Listener:
                 result = self.execute_remotely(command)
                 if command[0] == "download" and "[-] Error" not in result:
                     result = self.write_file(command[1], result)
-            except Exception, e:
-                result = "[-] Error, during command execution.\r\n" + e.message + "\r\n"
+            except Exception:
+                result = "[-] Error, during command execution."
             print(result)
