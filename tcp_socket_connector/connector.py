@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-import socket
-import subprocess
-import json
+import socket, subprocess, json
 
 class Connector:
     def __init__(self, ip, port):
