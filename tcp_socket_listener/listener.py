@@ -8,7 +8,10 @@ class Listener:
         self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.listener.bind((ip, port))
         self.listener.listen(0)
-        print("[+] Waiting for incoming connections.")
+        local = ""
+        if ip == "127.0.0.1":
+            local = "'loop_back' "
+        print("[+] Waiting for " + local + "incoming connections.")
         self.connection, address = self.listener.accept()
         print("[+] Got a connection from " + str(address))
 
