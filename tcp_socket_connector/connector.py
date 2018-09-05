@@ -37,7 +37,6 @@ class Connector:
 
     def run(self):
         while True:
-            print("ON")
             command = self.reliable_receive()
             try:
                 if command[0] == "exit":
