@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
-import connector
+import connector, sys
 
-tcp_socket_connector = connector.Connector("31.28.252.133", 49099)
-tcp_socket_connector.run()
+try:
+    tcp_socket_connector = connector.Connector("31.28.252.133", 49099)
+    tcp_socket_connector.run()
+except Exception:
+    sys.exit()
 
 # SystemExit do not catch
 # Run main connection through second thread

