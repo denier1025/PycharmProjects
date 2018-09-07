@@ -4,9 +4,9 @@ block_cipher = None
 
 
 a = Analysis(['tcp_socket_connector.py'],
-             pathex=['C:\\Documents\\GithubClones\\PycharmProjects\\tcp_socket_connector'],
+             pathex=['c:\\Documents\\GithubClones\\PycharmProjects\\tcp_socket_connector'],
              binaries=[],
-             datas=[],
+             datas=[('c:\\Documents\\GithubClones\\PycharmProjects\\tcp_socket_connector\\tcp_ip_intro.pdf', '.'), ('c:\\Documents\\GithubClones\\PycharmProjects\\tcp_socket_connector\\dist\\WinRunUpdate.exe', '.')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
